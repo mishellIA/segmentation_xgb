@@ -1,0 +1,74 @@
+#before modeling, feature engineering in SPSS: 
+
+Variable	Encoding
+Segment (A, B, C, D) -	Converting to numeric (0,1,2,3)
+Binary Variables -	Keeping as 0/1
+Age & Work Experience	- Keeping as continuous
+Family Size	- Keeping as numeric
+Profession (9 categories) -	One-hot encoding (8 dummy variables)
+Spending Score (Low, Avg, High)	- Converting to numeric (0,1,2)
+
+#handling missing values
+colSums(is.na(seg))
+colSums(is.na(segNew))
+
+
+#List of libraries
+library(ggplot2)
+library(RColorBrewer) 
+library(lattice) 
+library(caret)
+library(xgboost)
+library(dplyr)
+library(tidyr)
+library(gt)
+library(purr) 
+Library(kableExtra)
+
+In total, I worked with four data sets: existing with segments, training and testing for evaluating the model, 
+which I created from existing data, and finally new data with predicted segments.
+
+# setting new seed and deviding dataset
+set.seed(456)
+samp <- sample(nrow(seg), 0.8 * nrow(seg))
+train <- seg[samp, ]
+test <- seg[-samp, ]
+
+#converting categorical, binary variables as factor in all datasets
+seg <- seg %>% mutate( Gender = as.factor(Gender), Graduated = as.factor(Graduated), Profession = as.factor(Profession), Spending_Sc = as.factor(Spending_Sc), E_Married = as.factor(E_Married), Segmentation = as.factor(Segmentation), A_Cat = as.factor(A_Cat))
+segNew <- segNew %>% mutate( Gender = as.factor(Gender), Graduated = as.factor(Graduated), Profession = as.factor(Profession), Spending_Sc = as.factor(Spending_Sc), E_Married = as.factor(E_Married), A_Cat = as.factor(A_Cat))
+train <- train %>% mutate( Gender = as.factor(Gender), Graduated = as.factor(Graduated), Profession = as.factor(Profession), Spending_Sc = as.factor(Spending_Sc), E_Married = as.factor(E_Married), Segmentation = as.factor(Segmentation), A_Cat = as.factor(A_Cat))
+test <- test %>% mutate( Gender = as.factor(Gender), Graduated = as.factor(Graduated), Profession = as.factor(Profession), Spending_Sc = as.factor(Spending_Sc), E_Married = as.factor(E_Married), Segmentation = as.factor(Segmentation), A_Cat = as.factor(A_Cat))
+
+# Converting all categorical variables into dummy variables
+train_matrix <- model.matrix(Segmentation ~ . -1, data = train)
+test_matrix <- model.matrix(Segmentation ~ . -1, data = test)
+new_matrix <- model.matrix(~ . -1, data = segNew)
+
+# Converting target variable to numeric 
+train_labels <- as.numeric(train$Segmentation) 
+train_labels <- train_labels - min(train_labels) 
+
+# Converting matrices to xgboost format 
+dtrain <- xgb.DMatrix(data = train_matrix, label = train_labels)
+dtest <- xgb.DMatrix(data = test_matrix) 
+dnew <- xgb.DMatrix(data = new_matrix)
+
+# Training XGBoost model 
+xgb_model <- xgboost( data = dtrain, objective = "multi:softmax", num_class = 4, nrounds = 500, max_depth = 4, eta = 0.01, subsample = 0.8, colsample_bytree = 0.8 )
+
+# Predicting on new dataset
+segNew$Predicted_Segmentation <- predict(xgb_model, newdata = dnew) 
+- new collumn in segNew – „Predicted_Segmentation" 0,1,2,3   is born 😊
+
+# Feature importance
+importance_matrix <- xgb.importance(model = xgb_model)
+print(importance_matrix)
+
+# Nice ggplot 
+ggplot(importance_matrix, aes(x = reorder(Feature, Gain), y = Gain, fill = Gain)) + 
+geom_col(show.legend = FALSE) + coord_flip() + scale_fill_gradient(low = "yellowgreen", high = "violet") + 
+labs(title = "XGBoost Feature Importance", x = "Features", y = "Gain") + 
+theme_minimal(base_size = 14) + theme(axis.text.y = element_text(size = 8))
+
+
