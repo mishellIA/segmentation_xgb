@@ -17,6 +17,8 @@ Segment 1 decreased—potential loss of this type of customer compared to the do
 
 ### 📊 Key Factors Comparison
 Of the new segments that grew overall (0,2,3), the second one is interesting, which, compared to the existing one, contains more customers with average and high purchasing power. It is therefore a segment that will welcome your business offers. For example, from the analysis you will learn that this segment is mainly made up of university graduates (93.9%), married people (97.5%), with an average age of 55. The distribution of the third segment is overall larger, but only the proportion of those with the lowest frequency of purchases has increased. We can also see that the new market (specifically segment 1) has a larger proportion of customers with high consumption (+11%), but its overall distribution is smaller, which means that this group will be less dominant in the new market. However, it is the right group to address with premium offers.
+ [Interactive version](https://www.canva.com/design/DAGgCCoL5ek/olnPv7jVQ2QkE5nfYJyXTQ/view)
+
 
 ![key factors](https://github.com/user-attachments/assets/7cab898d-18b6-4f42-b411-2b49d8c25e7d)
 
