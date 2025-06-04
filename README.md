@@ -35,7 +35,7 @@ Summary: While *age* and *consumption score* are still key factors in determinin
 ## 🙋‍♀️ Stay Connected
 
 If you enjoyed this project or want to see more behind-the-scenes content, research teasers, and app ideas,  
-📲 **Follow me on Instagram:** [@insaytia](https://www.instagram.com/insaytia/)  
+📲 **Follow me on Instagram:** [@insaytia_sk](https://www.instagram.com/insaytia_sk/)  
 💼 Or connect with me on [LinkedIn](https://www.linkedin.com/in/michaela-valachová-a0a08ab9/)
 
 Thanks for stopping by 💙
