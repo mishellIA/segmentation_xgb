@@ -30,8 +30,14 @@ Summary: While *age* and *consumption score* are still key factors in determinin
 ![feature importance](https://github.com/user-attachments/assets/3f68b488-037a-481a-a929-957f852bbd9d)
 
 
-🔗 [Read blogSLOVAK](https://mvalachova.com/blog/?blogPost=kto-su-vasi-potencialni-zakaznici-vyuzitie-strojoveho-ucenia-na-segmentaciu)
+🔗 [📖 Read full analysis on my blog/SLOVAK](https://mvalachova.com/blog/?blogPost=kto-su-vasi-potencialni-zakaznici-vyuzitie-strojoveho-ucenia-na-segmentaciu)
 
+## 🙋‍♀️ Stay Connected
 
+If you enjoyed this project or want to see more behind-the-scenes content, research teasers, and app ideas,  
+📲 **Follow me on Instagram:** [@insaytia](https://www.instagram.com/insaytia/)  
+💼 Or connect with me on [LinkedIn](https://www.linkedin.com/in/michaela-valachová-a0a08ab9/)
+
+Thanks for stopping by 💙
 
 
