@@ -23,7 +23,7 @@ library(dplyr)
 library(tidyr)
 library(gt)
 library(purr) 
-Library(kableExtra)
+library(kableExtra)
 
 In total, I worked with four data sets: existing with segments, training and testing for evaluating the model, 
 which I created from existing data, and finally new data with predicted segments.
@@ -59,16 +59,100 @@ xgb_model <- xgboost( data = dtrain, objective = "multi:softmax", num_class = 4,
 
 # Predicting on new dataset
 segNew$Predicted_Segmentation <- predict(xgb_model, newdata = dnew) 
-- new collumn in segNew – „Predicted_Segmentation" 0,1,2,3   is born 😊
+- new collumn in segNew – „Predicted_Segmentation" 0,1,2,3 is born. 
 
 # Feature importance
 importance_matrix <- xgb.importance(model = xgb_model)
 print(importance_matrix)
 
-# Nice ggplot 
+# ggplot for FE visualizing 
 ggplot(importance_matrix, aes(x = reorder(Feature, Gain), y = Gain, fill = Gain)) + 
 geom_col(show.legend = FALSE) + coord_flip() + scale_fill_gradient(low = "yellowgreen", high = "violet") + 
 labs(title = "XGBoost Feature Importance", x = "Features", y = "Gain") + 
 theme_minimal(base_size = 14) + theme(axis.text.y = element_text(size = 8))
 
+# Model accuracy - test data
+test_preds <- predict(xgb_model, newdata = dtest)
+conf_matrix <- confusionMatrix(factor(test_preds), factor(test$Segmentation))
+print(conf_matrix)
+
+# Comparing segmentation vs predicted segmentation
+table(train$Segmentation)
+table(segNew$Predicted_Segmentation)
+
+# Computing proportions per segment in `train` - for factor variables
+train_summary <- train %>% group_by(Segmentation) %>% summarise(across(where(is.factor), ~ list(prop.table(table(.))))) %>% pivot_longer(-Segmentation, names_to = "Variable", values_to = "Proportions") %>% mutate(Proportions = sapply(Proportions, function(x) paste(names(x), ": ", round(x * 100, 1), "%", collapse = " | ")))
+train_summary %>% gt() %>% tab_header(title = "Segment-wise Proportions in Training Data")
+
+# Compute overall category proportions in `new_data` 
+new_summary <- segNew %>% group_by(Predicted_Segmentation) %>% summarise(across(where(is.factor), ~ list(prop.table(table(.))))) %>% pivot_longer(-Predicted_Segmentation, names_to = "Variable", values_to = "Proportions") %>% mutate(Proportions = sapply(Proportions, function(x) paste(names(x), ": ", round(x * 100, 1), "%", collapse = " | ")))
+new_summary %>% gt() %>% tab_header(title = "Predicted Segment-wise Proportions in New Data")
+
+#Checking overall segment distribution:
+# Train segmentation distribution 
+train_dist <- table(train$Segmentation)
+# New data predicted segmentation distribution 
+new_dist <- table(segNew$Predicted_Segmentation)
+# Combining into a single dataframe for comparison
+segment_comparison <- data.frame( Segment = names(train_dist), Train_Count = as.numeric(train_dist), New_Count = as.numeric(new_dist) )
+# Adding proportions
+segment_comparison <- segment_comparison %>% mutate(Train_Proportion = Train_Count / sum(Train_Count), New_Proportion = New_Count / sum(New_Count))
+# Checking results
+print(segment_comparison)
+
+#Visualization:
+segment_plot_data <- segment_comparison %>% pivot_longer(cols = c(Train_Proportion, New_Proportion), names_to = "Dataset", values_to = "Proportion")
+# Plot 
+ggplot(segment_plot_data, aes(x = Segment, y = Proportion, fill = Dataset)) + geom_col(position = "dodge") + labs(title = "Comparison of Segment Distributions", x = "Segment", y = "Proportion", fill = "Dataset") + theme_minimal()
+
+# Now the same comparison but for my continual variables - Train summary by segment:
+train_summary <- train %>% group_by(Segmentation) %>% summarise(across(where(is.numeric), mean, na.rm = TRUE))
+print(train_summary) 
+new_summary <- segNew %>% group_by(Predicted_Segmentation) %>% summarise(across(where(is.numeric), mean, na.rm = TRUE))
+print(new_summary)
+
+# And final summarization for continual variables:
+segment_summary <- train %>%
+group_by(Segmentation) %>%
+summarise(across(everything(), ~ mean(as.numeric(.), na.rm = TRUE)))
+print(segment_summary)
+
+# Visualizations of segment characteristic on train vs new data- example is for working experience variable:
+ggplot(train, aes(x = factor(Segmentation), y = Work_Exp, fill = factor(Segmentation))) + geom_boxplot() + 
+scale_fill_brewer(palette = "Set3") +
+labs(title = "Working Experience Across Segments", x = "Segment", y = "Work_Exp") + theme_minimal()
+
+ggplot(segNew, aes(x = factor(Predicted_Segmentation), y = Work_Exp, fill = factor(Predicted_Segmentation))) + geom_boxplot() + 
+scale_fill_brewer(palette = "Set3") +
+labs(title = "Working Experience Across Segments", x = "Segment", y = "Working experience") + theme_minimal()
+
+# Key visualization: A bar plot showing the proportion of customers in each predicted segment.
+ggplot(segNew, aes(x = factor(Predicted_Segmentation), fill = factor(Predicted_Segmentation))) + geom_bar() + labs(title = "Distribution of Predicted Segments", x = "Segment", y = "Count") + theme_minimal()
+
+# Comparing new customers to the historical customers/whole existing customer dataset:
+seg_dist <- table(seg$Segmentation)
+new_dist <- table(segNew$Predicted_Segmentation)
+segment_comparison <- data.frame( Segment = names(seg_dist), Seg_Count = as.numeric(seg_dist), New_Count = as.numeric(new_dist) )
+segment_comparison <- segment_comparison %>% mutate(Seg_Proportion = Seg_Count / sum(Seg_Count), New_Proportion = New_Count / sum(New_Count))
+
+print(segment_comparison)
+
+# Table
+kable(segment_comparison) %>%
+kable_styling("striped", full_width = FALSE)
+
+# ggplot
+ggplot(segment_plot_data, aes(x = Segment, y = Proportion, fill = Dataset)) + 
+geom_col(position = "dodge") + 
+labs(title = "Comparison of Segment Distributions", x = "Segment", y = "Proportion", fill = "Dataset") + 
+theme_minimal()
+
+# Finaly- who belong where?
+segment_summary <- segNew %>% group_by(Predicted_Segmentation) %>% summarise(across(where(is.numeric), median, na.rm = TRUE))
+
+kable(segment_summary) %>% kable_styling("striped", full_width = FALSE)  
+
+segment_summary <- seg %>% group_by(Segmentation) %>% summarise(across(where(is.numeric), median, na.rm = TRUE))
+
+kable(segment_summary) %>% kable_styling("striped", full_width = FALSE)  
 
